@@ -38,7 +38,8 @@ class BaseTask:
             logging.info(
                 f"Attemping to load user specified checkpoint at {self.config['checkpoint']}"
             )
-            self.trainer.load_checkpoint(checkpoint_path=self.config["checkpoint"])
+            self.trainer.load_checkpoint(checkpoint_path=self.config["checkpoint"], inference_only=self.config.get("inference_only", False))
+            logging.info(f"Loaded checkpoint with mode inference_only {self.config.get("inference_only", False)}")
         # if the supplied checkpoint doesn't exist and there exists a previous checkpoint in the checkpoint path, this
         # means that the previous job didn't terminate "nicely" (due to node failures, crashes etc), then attempt
         # to load the last found checkpoint

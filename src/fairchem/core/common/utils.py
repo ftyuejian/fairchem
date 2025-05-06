@@ -1093,6 +1093,7 @@ def new_trainer_context(*, config: dict[str, Any]):
         "slurm": config.get("slurm", {}),
         "name": task_name,
         "gp_gpus": config.get("gp_gpus"),
+        "inference_only": config.get("inference_only", False)
     }
 
     if task_name == "multitask":
