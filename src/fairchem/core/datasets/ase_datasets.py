@@ -25,6 +25,7 @@ from tqdm import tqdm
 
 from fairchem.core.common.registry import registry
 from fairchem.core.datasets._utils import rename_data_object_keys
+from fairchem.core.datasets.lmdb_database import LMDBDatabase
 from fairchem.core.datasets.base_dataset import BaseDataset
 from fairchem.core.datasets.target_metadata_guesser import guess_property_metadata
 from fairchem.core.modules.transforms import DataTransforms
@@ -409,6 +410,173 @@ class AseReadMultiStructureDataset(AseAtomsDataset):
         return relaxed_atoms.get_potential_energy(apply_constraint=False)
 
 
+# @registry.register_dataset("ase_db")
+# class AseDBDataset(AseAtomsDataset):
+#     """
+#     This Dataset connects to an ASE Database, allowing the storage of atoms objects
+#     with a variety of backends including JSON, SQLite, and database server options.
+
+#     For more information, see:
+#     https://databases.fysik.dtu.dk/ase/ase/db/db.html
+
+#     args:
+#         config (dict):
+#             src (str): Either
+#                     - the path an ASE DB,
+#                     - the connection address of an ASE DB,
+#                     - a folder with multiple ASE DBs,
+#                     - a list of folders with ASE DBs
+#                     - a glob string to use to find ASE DBs, or
+#                     - a list of ASE db paths/addresses.
+#                     If a folder, every file will be attempted as an ASE DB, and warnings
+#                     are raised for any files that can't connect cleanly
+
+#                     Note that for large datasets, ID loading can be slow and there can be many
+#                     ids, so it's advised to make loading the id list as easy as possible. There is not
+#                     an obvious way to get a full list of ids from most ASE dbs besides simply looping
+#                     through the entire dataset. See the AseLMDBDataset which was written with this usecase
+#                     in mind.
+
+#             connect_args (dict): Keyword arguments for ase.db.connect()
+
+#             select_args (dict): Keyword arguments for ase.db.select()
+#                     You can use this to query/filter your database
+
+#             a2g_args (dict): Keyword arguments for fairchem.core.preprocessing.AtomsToGraphs()
+#                     default options will work for most users
+
+#                     If you are using this for a training dataset, set
+#                     "r_energy":True, "r_forces":True, and/or "r_stress":True as appropriate
+#                     In that case, energy/forces must be in the database
+
+#             keep_in_memory (bool): Store data in memory. This helps avoid random reads if you need
+#                     to iterate over a dataset many times (e.g. training for many epochs).
+#                     Not recommended for large datasets.
+
+#             atoms_transform_args (dict): Additional keyword arguments for the atoms_transform callable
+
+#             transforms (dict[str, dict]): Dictionary specifying data transforms as {transform_function: config}
+#                     where config is a dictionary specifying arguments to the transform_function
+
+#             key_mapping (dict[str, str]): Dictionary specifying a mapping between the name of a property used
+#                 in the model with the corresponding property as it was named in the dataset. Only need to use if
+#                 the name is different.
+
+#         atoms_transform (callable, optional): Additional preprocessing function applied to the Atoms
+#                     object. Useful for applying tags, for example.
+
+#         transform (callable, optional): deprecated?
+#     """
+
+#     def _load_dataset_get_ids(self, config: dict) -> list[int]:
+#         if isinstance(config["src"], list):
+#             filepaths = []
+#             for path in sorted(config["src"]):
+#                 if os.path.isdir(path):
+#                     filepaths.extend(sorted(glob(f"{path}/*")))
+#                 elif os.path.isfile(path):
+#                     filepaths.append(path)
+#                 else:
+#                     raise RuntimeError(f"Error reading dataset in {path}!")
+#         elif os.path.isfile(config["src"]):
+#             filepaths = [config["src"]]
+#         elif os.path.isdir(config["src"]):
+#             filepaths = sorted(glob(f'{config["src"]}/*'))
+#         else:
+#             filepaths = sorted(glob(config["src"]))
+
+#         self.dbs = []
+
+#         for path in filepaths:
+#             try:
+#                 self.dbs.append(
+#                     self.connect_db(
+#                         path,
+#                         config.get("connect_args", {}),
+#                     )
+#                 )
+#             except ValueError:
+#                 logging.debug(
+#                     f"Tried to connect to {path} but it's not an ASE database!"
+#                 )
+
+#         self.select_args = config.get("select_args", {})
+#         if self.select_args is None:
+#             self.select_args = {}
+
+#         # In order to get all of the unique IDs using the default ASE db interface
+#         # we have to load all the data and check ids using a select. This is extremely
+#         # inefficient for large dataset. If the db we're using already presents a list of
+#         # ids and there is no query, we can just use that list instead and save ourselves
+#         # a lot of time!
+#         self.db_ids = []
+#         for db in self.dbs:
+#             if hasattr(db, "ids") and self.select_args == {}:
+#                 self.db_ids.append(db.ids)
+#             else:
+#                 # this is the slow alternative
+#                 self.db_ids.append([row.id for row in db.select(**self.select_args)])
+
+#         idlens = [len(ids) for ids in self.db_ids]
+#         self._idlen_cumulative = np.cumsum(idlens).tolist()
+
+#         return list(range(sum(idlens)))
+
+#     def get_atoms(self, idx: int) -> ase.Atoms:
+#         """Get atoms object corresponding to datapoint idx. Useful to read other properties not in data object.
+#         Args:
+#             idx (int): index in dataset
+
+#         Returns:
+#             atoms: ASE atoms corresponding to datapoint idx
+#         """
+#         # Figure out which db this should be indexed from.
+#         db_idx = bisect.bisect(self._idlen_cumulative, idx)
+
+#         # Extract index of element within that db
+#         el_idx = idx
+#         if db_idx != 0:
+#             el_idx = idx - self._idlen_cumulative[db_idx - 1]
+#         assert el_idx >= 0
+
+#         atoms_row = self.dbs[db_idx]._get_row(self.db_ids[db_idx][el_idx])
+#         atoms = atoms_row.toatoms()
+
+#         # put data back into atoms info
+#         if isinstance(atoms_row.data, dict):
+#             atoms.info.update(atoms_row.data)
+
+#         return atoms
+
+#     @staticmethod
+#     def connect_db(
+#         address: str | Path, connect_args: dict | None = None
+#     ) -> ase.db.core.Database:
+#         if connect_args is None:
+#             connect_args = {}
+
+#         # If we're using an aselmdb, let's set readonly=True to be safe!
+#         if "aselmdb" in address:
+#             connect_args["readonly"] = True
+#             connect_args["use_lock_file"] = False
+
+#         return ase.db.connect(address, **connect_args)
+
+#     def __del__(self):
+#         for db in self.dbs:
+#             if hasattr(db, "close"):
+#                 db.close()
+
+#     def sample_property_metadata(self, num_samples: int = 100) -> dict:
+#         logging.warning(
+#             "You specific a folder of ASE dbs, so it's impossible to know which metadata to use. Using the first!"
+#         )
+#         if self.dbs[0].metadata == {}:
+#             return super().sample_property_metadata(num_samples)
+
+#         return copy.deepcopy(self.dbs[0].metadata)
+
+
 @registry.register_dataset("ase_db")
 class AseDBDataset(AseAtomsDataset):
     """
@@ -470,9 +638,9 @@ class AseDBDataset(AseAtomsDataset):
     def _load_dataset_get_ids(self, config: dict) -> list[int]:
         if isinstance(config["src"], list):
             filepaths = []
-            for path in sorted(config["src"]):
+            for path in config["src"]:
                 if os.path.isdir(path):
-                    filepaths.extend(sorted(glob(f"{path}/*")))
+                    filepaths.extend(glob(f"{path}/*"))
                 elif os.path.isfile(path):
                     filepaths.append(path)
                 else:
@@ -480,20 +648,15 @@ class AseDBDataset(AseAtomsDataset):
         elif os.path.isfile(config["src"]):
             filepaths = [config["src"]]
         elif os.path.isdir(config["src"]):
-            filepaths = sorted(glob(f'{config["src"]}/*'))
+            filepaths = glob(f'{config["src"]}/*')
         else:
-            filepaths = sorted(glob(config["src"]))
+            filepaths = glob(config["src"])
 
         self.dbs = []
 
-        for path in filepaths:
+        for path in sorted(filepaths):
             try:
-                self.dbs.append(
-                    self.connect_db(
-                        path,
-                        config.get("connect_args", {}),
-                    )
-                )
+                self.dbs.append(self.connect_db(path, config.get("connect_args", {})))
             except ValueError:
                 logging.debug(
                     f"Tried to connect to {path} but it's not an ASE database!"
@@ -553,11 +716,12 @@ class AseDBDataset(AseAtomsDataset):
     ) -> ase.db.core.Database:
         if connect_args is None:
             connect_args = {}
-
-        # If we're using an aselmdb, let's set readonly=True to be safe!
-        if "aselmdb" in address:
-            connect_args["readonly"] = True
-            connect_args["use_lock_file"] = False
+        db_type = connect_args.get("type", "extract_from_name")
+        if db_type in ("lmdb", "aselmdb") or (
+            db_type == "extract_from_name"
+            and str(address).rsplit(".", maxsplit=1)[-1] in ("lmdb", "aselmdb")
+        ):
+            return LMDBDatabase(address, readonly=True, **connect_args)
 
         return ase.db.connect(address, **connect_args)
 
