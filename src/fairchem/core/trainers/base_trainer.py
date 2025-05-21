@@ -363,6 +363,7 @@ class BaseTrainer(ABC):
                 convert_settings_to_split_settings(self.config["dataset"], "train"),
                 "train",
             )
+            # breakpoint()
             self.train_sampler = self.get_sampler(
                 self.train_dataset,
                 self.config["optim"].get("batch_size", 1),
@@ -578,7 +579,7 @@ class BaseTrainer(ABC):
                     self.model, log_freq=int(self.config["logger"]["watch"])
                 )
             self.logger.log_summary({"num_params": num_params})
-
+        # breakpoint()
         if distutils.initialized():
             self.model = DistributedDataParallel(
                 self.model,

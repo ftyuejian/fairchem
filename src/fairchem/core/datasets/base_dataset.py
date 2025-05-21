@@ -54,7 +54,7 @@ class BaseDataset(Dataset[T_co], metaclass=ABCMeta):
                 self.paths = [Path(self.config["src"])]
             else:
                 self.paths = tuple(Path(path) for path in sorted(config["src"]))
-
+        # breakpoint()
         self.lin_ref = None
         if self.config.get("lin_ref", False):
             lin_ref = torch.tensor(
@@ -76,12 +76,15 @@ class BaseDataset(Dataset[T_co], metaclass=ABCMeta):
     def _metadata(self) -> dict[str, ArrayLike]:
         # logic to read metadata file here
         metadata_npzs = []
+        # print("here",self.config.get("metadata_path", None))
+        # print(self.config)
         if self.config.get("metadata_path", None) is not None:
             metadata_npzs.append(
                 np.load(self.config["metadata_path"], allow_pickle=True)
             )
-
+        
         else:
+            print(self.paths)
             for path in self.paths:
                 if path.is_file():
                     metadata_file = path.parent / "metadata.npz"
@@ -155,8 +158,9 @@ def create_dataset(config: dict[str, Any], split: str) -> Subset:
         Subset: dataset subset class
     """
     # Initialize the dataset
+    # breakpoint()
     dataset_cls = registry.get_dataset_class(config.get("format", "lmdb"))
-    print(dataset_cls)
+    # print(dataset_cls)
     # import sys
     # sys.exit()
     assert issubclass(dataset_cls, Dataset), f"{dataset_cls} is not a Dataset"
@@ -178,7 +182,7 @@ def create_dataset(config: dict[str, Any], split: str) -> Subset:
     g.manual_seed(seed)
 
     dataset = dataset_cls(current_split_config)
-
+    # breakpoint()
     # Get indices of the dataset
     indices = dataset.indices
     max_atoms = current_split_config.get("max_atoms", None)

@@ -222,6 +222,7 @@ class WandBSingletonLogger:
             project=project,
             entity=entity,
             resume="allow",
+            # resume=False,
             group=group,
         )
 

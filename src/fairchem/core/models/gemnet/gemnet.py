@@ -412,6 +412,7 @@ class GemNetT(nn.Module, GraphModelMixin):
 
         empty_image = neighbors == 0
         if torch.any(empty_image):
+            torch.save(data, f"/data/yuejian/MLFF_DIST/data/labels/MPtrj_fairchem_natoms<=10_300k/buggy_batch/empty_image.pt")
             raise ValueError(
                 f"An image has no neighbors: id={data.id[empty_image]}, "
                 f"sid={data.sid[empty_image]}, fid={data.fid[empty_image]}"

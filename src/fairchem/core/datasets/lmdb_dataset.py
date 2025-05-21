@@ -60,7 +60,7 @@ class LmdbDataset(BaseDataset):
             len(self.paths) == 1
         ), f"{type(self)} does not support a list of src paths."
         self.path = self.paths[0]
-
+        # breakpoint()
         if not self.path.is_file():
             db_paths = sorted(self.path.glob("*.lmdb"))
             assert len(db_paths) > 0, f"No LMDBs found in '{self.path}'"
@@ -118,7 +118,7 @@ class LmdbDataset(BaseDataset):
 
         self.key_mapping = self.config.get("key_mapping", None)
         self.transforms = DataTransforms(self.config.get("transforms", {}))
-
+        # breakpoint()
     def __getitem__(self, idx: int) -> T_co:
         # if sharding, remap idx to appropriate idx of the sharded set
         idx = self.indices[idx]

@@ -225,6 +225,7 @@ class eSEN_Backbone(nn.Module, GraphModelMixin):
 
     @conditional_grad(torch.enable_grad())
     def forward(self, data_dict) -> dict[str, torch.Tensor]:
+        # print(data_dict["pos"].shape)
         ###############################################################
         # gradient-based forces/stress
         ###############################################################
@@ -247,6 +248,9 @@ class eSEN_Backbone(nn.Module, GraphModelMixin):
             )
 
             data_dict["pos"].requires_grad = True
+            # print(data_dict["pos"].shape)
+            # import sys
+            # sys.exit()
             data_dict["pos"] = data_dict["pos"] + torch.bmm(
                 data_dict["pos"].unsqueeze(-2),
                 torch.index_select(symmetric_displacement, 0, data_dict["batch"]),

@@ -147,7 +147,7 @@ class OCPTrainer(BaseTrainer):
         # Calculate start_epoch from step instead of loading the epoch number
         # to prevent inconsistencies due to different batch size in checkpoint.
         start_epoch = self.step // len(self.train_loader)
-
+        
         for epoch_int in range(start_epoch, self.config["optim"]["max_epochs"]):
             skip_steps = self.step % len(self.train_loader)
             self.train_sampler.set_epoch_and_start_iteration(epoch_int, skip_steps)
