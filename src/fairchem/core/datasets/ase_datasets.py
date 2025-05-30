@@ -81,6 +81,7 @@ class AseAtomsDataset(BaseDataset, ABC):
         super().__init__(config)
 
         a2g_args = config.get("a2g_args", {}) or {}
+        # print(a2g_args)
         self.a2g = partial(AtomicData.from_ase, **a2g_args)
 
         self.key_mapping = self.config.get("key_mapping", None)
@@ -456,6 +457,7 @@ class AseDBDataset(AseAtomsDataset):
     """
 
     def _load_dataset_get_ids(self, config: dict) -> list[int]:
+        # print(config)
         if isinstance(config["src"], list):
             filepaths = []
             for path in sorted(config["src"]):
@@ -473,7 +475,7 @@ class AseDBDataset(AseAtomsDataset):
             filepaths = sorted(glob(config["src"]))
 
         self.dbs = []
-
+        # print("show it",config.get("connect_args", {}))
         for path in filepaths:
             try:
                 self.dbs.append(
@@ -562,3 +564,4 @@ class AseDBDataset(AseAtomsDataset):
             return super().sample_property_metadata(num_samples)
 
         return copy.deepcopy(self.dbs[0].metadata)
+

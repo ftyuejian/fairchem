@@ -146,6 +146,8 @@ class AtomicData:
     batch: torch.Tensor  # (num_node,)
     # id
     sid: list[str]
+    data_id: list[str]
+    source: list[str]
 
     def __init__(
         self,
@@ -166,6 +168,8 @@ class AtomicData:
         stress=None,
         batch=None,
         sid=None,
+        data_id=None,
+        source=None,
     ):
         self.__keys__ = set(_REQUIRED_KEYS)
 
@@ -208,6 +212,8 @@ class AtomicData:
             self.sid = sid
         else:
             self.sid = [""]
+        self.data_id = data_id
+        self.source = source
 
         self.__slices__ = None
         self.__cumsum__ = None
@@ -305,6 +311,7 @@ class AtomicData:
         r_stress: bool = True,
         r_data_keys=None,  # NOT USED, compat for now
     ) -> AtomicData:
+        # print(input_atoms.info)
         atoms = input_atoms.copy()
         calc = input_atoms.calc
         # TODO: maybe compute a safe cell size if not provided.
@@ -423,7 +430,9 @@ class AtomicData:
                 else 0
             ]
         )
-
+        # FIXME: add by Yue Jian
+        data_id = [atoms.info.get("data_id", None)]
+        source = [atoms.info.get("source", None)]
         # NOTE: code assumes these are ints.. not tensors
         # charge = atoms.info.get("charge", 0)
         # spin = atoms.info.get("spin", 0)
@@ -444,6 +453,9 @@ class AtomicData:
             forces=forces,
             stress=stress,
             sid=sid,
+            # id
+            data_id=data_id,
+            source=source,
         )
 
         return data

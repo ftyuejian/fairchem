@@ -92,6 +92,7 @@ class Task:
 
 
 def update_configs(original_config, new_config):
+    breakpoint()
     updated_config = deepcopy(original_config)
     for k, v in new_config.items():
         is_dict_config = (isinstance(v, (dict, DictConfig))) and (

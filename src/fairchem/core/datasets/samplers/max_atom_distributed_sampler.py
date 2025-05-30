@@ -173,6 +173,7 @@ class MaxAtomDistributedBatchSampler(Sampler[list[int]]):
         logging.info(
             f"{samples_filtered} samples were removed because they exceed {self.max_atoms} atoms"
         )
+        # torch.save(indices, "/home/yuejian/project/MLFF-distill/draft/batches.pt")
         return indices
 
     def __len__(self) -> int:

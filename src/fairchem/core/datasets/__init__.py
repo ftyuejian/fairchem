@@ -15,5 +15,5 @@ __all__ = [
     "AseReadDataset",
     "AseReadMultiStructureDataset",
     "create_dataset",
-    "data_list_collater",
+    "data_list_collater"
 ]
