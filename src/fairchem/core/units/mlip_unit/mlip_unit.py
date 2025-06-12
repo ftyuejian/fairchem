@@ -92,7 +92,6 @@ class Task:
 
 
 def update_configs(original_config, new_config):
-    breakpoint()
     updated_config = deepcopy(original_config)
     for k, v in new_config.items():
         is_dict_config = (isinstance(v, (dict, DictConfig))) and (
@@ -351,7 +350,6 @@ def compute_metrics(
     target_masked = batch[task.name][output_mask]
     pred = predictions[task.name][task.property].clone()
     # denormalize the prediction
-    pred = task.normalizer.denorm(pred)
     # undo element references for energy tasks
     if task.element_references is not None:
         pred = task.element_references.undo_refs(

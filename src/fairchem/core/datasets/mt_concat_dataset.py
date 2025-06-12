@@ -54,6 +54,7 @@ class ConcatDataset(Dataset[T_co]):
 
     def __len__(self):
         return self.cumulative_sizes[-1]
+        # return 1
 
     def __getitem__(self, idx):
         dataset_idx, sample_idx = self._get_dataset_and_sample_index(idx)

@@ -29,6 +29,7 @@ class EvalRunner(Runner):
     ):
         self.dataloader = dataloader
         self.eval_unit = eval_unit
+        
         self.callbacks = callbacks if callbacks is not None else []
         self.max_steps_per_epoch = max_steps_per_epoch
 
