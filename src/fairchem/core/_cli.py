@@ -246,7 +246,6 @@ class Submitit(Checkpointable):
 
         setup_env_vars()
         setup_logging()
-
         dist_config = map_job_config_to_dist_config(self.config.job)
         logging.info("Setting up distributed backend...")
         distutils.setup(dist_config)

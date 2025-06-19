@@ -350,6 +350,7 @@ def compute_metrics(
     target_masked = batch[task.name][output_mask]
     pred = predictions[task.name][task.property].clone()
     # denormalize the prediction
+    pred = task.normalizer.denorm(pred)
     # undo element references for energy tasks
     if task.element_references is not None:
         pred = task.element_references.undo_refs(

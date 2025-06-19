@@ -29,7 +29,11 @@ class EvalRunner(Runner):
     ):
         self.dataloader = dataloader
         self.eval_unit = eval_unit
-        
+        # for i,batch in enumerate(self.dataloader):
+        #     batch = batch.to("cuda")
+        #     out = self.eval_unit.model(batch)
+        #     error = (out['forces']['forces'] - batch['forces']/1.433569).abs().mean()
+        #     breakpoint()
         self.callbacks = callbacks if callbacks is not None else []
         self.max_steps_per_epoch = max_steps_per_epoch
 
