@@ -21,7 +21,7 @@ from torchtnt.utils.distributed import get_file_init_method, get_tcp_init_method
 from fairchem.core.common.typing import none_throws
 
 T = TypeVar("T")
-DISTRIBUTED_PORT = 13354
+DISTRIBUTED_PORT = 13356
 CURRENT_DEVICE_TYPE_STR = "CURRRENT_DEVICE_TYPE"
 
 
