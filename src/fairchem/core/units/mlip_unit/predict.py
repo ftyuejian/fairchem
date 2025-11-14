@@ -260,7 +260,6 @@ class MLIPPredictUnit(PredictUnit[AtomicData], MLIPPredictUnitProtocol):
         tf32_context = (
             tf32_context_manager() if self.inference_mode.tf32 else nullcontext()
         )
-
         pred_output = {}
         with inference_context, tf32_context:
             output = self.model(data_device)
@@ -272,7 +271,6 @@ class MLIPPredictUnit(PredictUnit[AtomicData], MLIPPredictUnitProtocol):
                     pred_output[task_name] = task.element_references.undo_refs(
                         data_device, pred_output[task_name]
                     )
-
         return pred_output
 
 

@@ -256,7 +256,8 @@ class eSCNMDBackbone(nn.Module, MOLEInterface):
             self.lmax, self.mmax
         )
         self.register_buffer("coefficient_index", coefficient_index, persistent=False)
-
+        
+    @torch.compiler.disable
     def _get_rotmat_and_wigner(
         self, edge_distance_vecs: torch.Tensor, use_cuda_graph: bool
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -295,6 +296,7 @@ class eSCNMDBackbone(nn.Module, MOLEInterface):
             "njk,mk->njm", wigner_inv, self.mappingReduced.to_m.to(wigner_inv.dtype)
         )
         return wigner_and_M_mapping, wigner_and_M_mapping_inv
+    
 
     def _get_displacement_and_cell(
         self, data_dict: AtomicData
@@ -337,6 +339,7 @@ class eSCNMDBackbone(nn.Module, MOLEInterface):
         ):
             data_dict["pos"].requires_grad = True
         return displacement, orig_cell
+    
 
     def csd_embedding(self, charge, spin, dataset):
         with record_function("charge spin dataset embeddings"):
@@ -441,7 +444,6 @@ class eSCNMDBackbone(nn.Module, MOLEInterface):
 
         with record_function("get_displacement_and_cell"):
             displacement, orig_cell = self._get_displacement_and_cell(data_dict)
-
         with record_function("generate_graph"):
             graph_dict = self._generate_graph(data_dict)
 

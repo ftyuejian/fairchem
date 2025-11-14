@@ -365,7 +365,7 @@ def radius_graph_pbc_v2(
     pbc: torch.Tensor | None = None,
 ):
     pbc = canonical_pbc(data, pbc)
-
+    # data.pos is nan
     device = data.pos.device
     batch_size = len(data.natoms)
     data_batch_idxs = (
@@ -451,9 +451,12 @@ def radius_graph_pbc_v2(
     # more source atoms than target atoms, since the source atoms are
     # tiled by the PBC cells.
     num_cells_per_atom = torch.repeat_interleave(cells_per_image, num_atoms_per_image)
+
+    # problem here
     source_atom_index = torch.repeat_interleave(
         torch.arange(num_atoms, device=device).long(), num_cells_per_atom
     )
+    
     source_atom_image = data_batch_idxs[source_atom_index]
     source_atom_pos = atom_pos[source_atom_index]
 
@@ -533,7 +536,7 @@ def radius_graph_pbc_v2(
     # Perform min and max operations per image
     grid_min, no_op = torch.min(source_atom_grid_per_image, dim=1)
     grid_max, no_op = torch.max(source_atom_grid_per_image, dim=1)
-
+    
     # Size of grid in each dimension for each image
     grid_size = grid_max - grid_min + 1
     grid_length = grid_size[:, 0] * grid_size[:, 1] * grid_size[:, 2]
@@ -541,7 +544,6 @@ def radius_graph_pbc_v2(
     grid_offset = torch.cat(
         [torch.tensor([0], device=device), torch.cumsum(grid_length, dim=0)], dim=0
     )
-
     num_grid_cells = torch.sum(grid_length)
 
     # Subtract the minimum grid index so they are zero indexed
@@ -580,11 +582,14 @@ def radius_graph_pbc_v2(
     grid_cell_atom_count = torch.zeros(
         num_grid_cells, device=device, dtype=source_atom_grid_id.dtype
     )
+
+    #TODO: problem here, after compile , it all goes zero
     grid_cell_atom_count.index_add_(
         0, source_atom_grid_id, torch.ones_like(source_atom_grid_id)
     )
 
     # Maximum number of atoms in a grid cell used to pad the array of atoms in each
+    # TODO:grid_cell_atom_count
     max_atoms_per_grid_cell = torch.max(grid_cell_atom_count)
 
     # Compute a mapping from the grid cell lists to the atoms in that grid cell

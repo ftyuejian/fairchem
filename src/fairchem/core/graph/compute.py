@@ -86,7 +86,6 @@ def generate_graph(
             - 'offset_distances' (torch.Tensor): Distances between the atoms connected by the edges, including the cell offsets.
             - 'neighbors' (torch.Tensor): Number of neighbors for each atom.
     """
-
     if radius_pbc_version == 1:
         radius_graph_pbc_fn = radius_graph_pbc
     elif radius_pbc_version == 2:

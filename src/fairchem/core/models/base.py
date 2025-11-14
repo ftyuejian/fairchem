@@ -174,7 +174,7 @@ class HydraModel(nn.Module):
                 len(device_from_tensors) == 1
             ), f"all inputs must be on the same device, found the following devices {device_from_tensors}"
             self.device = device_from_tensors.pop()
-
+        
         emb = self.backbone(data)
         # Predict all output properties for all structures in the batch for now.
         out = {}
