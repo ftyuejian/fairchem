@@ -75,7 +75,18 @@ def conditional_grad(dec):
         @wraps(func)
         def cls_method(self, *args, **kwargs):
             f = func
-            if self.regress_forces and not getattr(self, "direct_forces", 0):
+            # Enable grad mode when the model needs autograd-based quantities.
+            # - Forces via autograd: regress_forces && !direct_forces
+            # - Stress via autograd: regress_stress && !direct_stress
+            needs_grad_for_forces = bool(
+                getattr(self, "regress_forces", False)
+                and not getattr(self, "direct_forces", False)
+            )
+            needs_grad_for_stress = bool(
+                getattr(self, "regress_stress", False)
+                and not getattr(self, "direct_stress", False)
+            )
+            if needs_grad_for_forces or needs_grad_for_stress:
                 f = dec(func)
             return f(self, *args, **kwargs)
 

@@ -553,7 +553,8 @@ class eSCNMDBackbone(nn.Module, MOLEInterface):
                 target_offset=1.0,
             )
         return x_message_prime
-
+        
+    # @torch.compiler.disable
     def _get_rotmat_and_wigner(
         self, edge_distance_vecs: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -710,12 +711,28 @@ class eSCNMDBackbone(nn.Module, MOLEInterface):
         # Enable gradients for autograd-based force/stress computation.
         # Must be set before graph generation so the computation graph
         # tracks positions and cell through edge distance calculations.
-        if not self.regress_config.direct_forces:
-            if self.regress_config.forces or self.regress_config.stress:
-                data_dict["pos"].requires_grad_(True)
-            if self.regress_config.stress:
-                data_dict["cell"].requires_grad_(True)
+        
+        # if not self.regress_config.direct_forces:
+        #     if self.regress_config.forces or self.regress_config.stress:
+        #         data_dict["pos"].requires_grad_(True)
+        #     if self.regress_config.stress:
+        #         data_dict["cell"].requires_grad_(True)
 
+        # Note: stress computed via autograd requires both pos and cell grads,
+        # regardless of whether forces are predicted directly.
+        enable_pos_grad = (
+            (self.regress_config.forces and not self.regress_config.direct_forces)
+            or (self.regress_config.stress and not self.regress_config.direct_stress)
+        )
+        enable_cell_grad = (
+            self.regress_config.stress and not self.regress_config.direct_stress
+        )
+        if enable_pos_grad:
+            data_dict["pos"].requires_grad_(True)
+        if enable_cell_grad:
+            data_dict["cell"].requires_grad_(True)
+        
+        
         with record_function("generate_graph"):
             graph_dict = self._generate_graph(data_dict)
 
