@@ -17,8 +17,12 @@ from fairchem.core.graph.radius_graph_pbc import get_max_neighbors_mask
 
 # Try to import nvalchemiops at module load
 try:
-    from nvalchemiops.neighborlist.neighbor_utils import estimate_max_neighbors
-    from nvalchemiops.neighborlist.neighborlist import neighbor_list
+    try:
+        from nvalchemiops.neighbors import estimate_max_neighbors
+        from nvalchemiops.torch.neighbors import neighbor_list
+    except ImportError:
+        from nvalchemiops.neighborlist.neighbor_utils import estimate_max_neighbors
+        from nvalchemiops.neighborlist.neighborlist import neighbor_list
 
     def nvalchemiops_installed() -> bool:
         return True
